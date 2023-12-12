@@ -9,22 +9,61 @@ namespace SOSFashion
     {
         private int totalCost;
 
-        public checkoutForm(int totalCost)
+        private ListBox kundvagnListBox;
+        private List<Item> itemsList;
+
+        public checkoutFormc(int totalCost, ListBox kundvagnListBox, List<Item> itemsList)
         {
             InitializeComponent();
             this.totalCost = totalCost;
+            this.kundvagnListBox = kundvagnListBox;
+            this.itemsList = itemsList;
+
             totalcostlabel.Text = $"Total Cost: {totalCost} kr";
         }
 
         private bool IsPaymentMethodValid(string billingMethod)
         {
-            string[] validMethods = { "true", "Paypal", "Creditcard", "Cash" };
+            string[] validMethods = { "Paypal", "Creditcard", "Cash" }; // Remove "true" from the array
             return Array.Exists(validMethods, method => method == billingMethod);
         }
 
         private void UpdateInventory(List<Item> purchasedItems)
         {
-            // Implement inventory update logic
+            foreach (Item cartItem in purchasedItems)
+            {
+                // Find the corresponding item in the inventory
+                Item inventoryItem = itemsList.Find(item => item.ItemName == cartItem.ItemName && item.Size == cartItem.Size);
+
+                if (inventoryItem != null)
+                {
+                    // Update the inventory quantity
+                    inventoryItem.AmountStock -= 1; // Assuming each purchase reduces the stock by 1
+
+                    if (inventoryItem.AmountStock < 0)
+                    {
+                        inventoryItem.AmountStock = 0;
+                    }
+
+                    // Update the amount sold
+                    inventoryItem.AmountSold += 1;
+
+                    // You can add more logic here if needed
+                }
+                else
+                {
+                    // Handle the case where the item is not found in the inventory
+                    MessageBox.Show($"Error: Item {cartItem.ItemName} with size {cartItem.Size} not found in inventory.");
+                }
+            }
+
+            // Save the updated inventory back to the file or database
+            SaveInventoryToFile();
+        }
+
+        private void SaveInventoryToFile()
+        {
+            // Implement the logic to save the updated inventory to the file
         }
 
         private void SendOrderConfirmation(string firstName, string lastName, List<Item> purchasedItems, string shippingMethod, string billingOption)
@@ -61,7 +100,7 @@ namespace SOSFashion
                 UpdateInventory(purchasedItems);
 
                 // Send order confirmation
-
+                SendOrderConfirmation(firstName, lastName, purchasedItems, selectedShippingMethod, selectedBillingOption);
 
                 // Close the form or perform additional actions
                 this.Close();
@@ -71,7 +110,5 @@ namespace SOSFashion
                 MessageBox.Show("Payment failed. Please try again or choose a different payment method.");
             }
         }
-
-
     }
 }
